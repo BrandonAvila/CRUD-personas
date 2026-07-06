@@ -128,6 +128,15 @@ Resources:
             Method: ANY
             Auth:
               Authorizer: CognitoJwt
+        # Los preflight CORS (OPTIONS) no llevan token: sin esta ruta explícita
+        # caerían en el authorizer del ANY y el navegador recibiría 401.
+        # Express (middleware cors) responde el preflight con 204.
+        Preflight:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /api/{proxy+}
+            Method: OPTIONS
       # La Lambda corre dentro de la VPC por defecto; el SG de RDS solo acepta
       # 3306 desde este SG (no hay acceso público a la BD desde internet).
       VpcConfig:
