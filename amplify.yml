@@ -1,0 +1,22 @@
+# Configuración de build para AWS Amplify Hosting (monorepo pnpm).
+# En la consola de Amplify: marcar "My app is a monorepo" con app root = apps/web.
+version: 1
+applications:
+  - appRoot: apps/web
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - corepack enable
+            - corepack prepare pnpm@9 --activate
+            - pnpm install --frozen-lockfile
+        build:
+          commands:
+            - pnpm build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
