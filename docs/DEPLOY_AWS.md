@@ -126,6 +126,27 @@ cd dist/lambda && npm install --omit=dev --no-package-lock && zip -r ../api-lamb
 
 ---
 
+## Paso 7 — (Opcional) CI/CD del backend con GitHub Actions
+
+El workflow [`.github/workflows/deploy-backend.yml`](../.github/workflows/deploy-backend.yml) ejecuta `sam deploy` en cada push a `main` que toque `apps/api/**` o `infra/**`, y termina verificando `/health`. Se autentica **sin access keys** (OIDC): GitHub asume un rol IAM cuya confianza está limitada a este repo y rama.
+
+Configuración (una sola vez):
+
+1. **Proveedor OIDC y rol** (la trust policy está en [`infra/github-trust-policy.json`](../infra/github-trust-policy.json); ajusta cuenta/repo si difieren):
+
+   ```bash
+   aws iam create-open-id-connect-provider --url https://token.actions.githubusercontent.com \
+     --client-id-list sts.amazonaws.com --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
+   aws iam create-role --role-name github-actions-crud-personas \
+     --assume-role-policy-document file://infra/github-trust-policy.json
+   aws iam attach-role-policy --role-name github-actions-crud-personas \
+     --policy-arn arn:aws:iam::aws:policy/AdministratorAccess   # demo; en producción, acótalo
+   ```
+
+2. **Secrets del repo** (GitHub → Settings → Secrets and variables → Actions): `AWS_DEPLOY_ROLE_ARN` (ARN del rol anterior), `DB_HOST` (endpoint de RDS) y `DB_PASSWORD`.
+
+---
+
 ## Alternativa automatizada — AWS SAM
 
 Con [SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html) instalado:

@@ -45,6 +45,7 @@ crud-personas/
 │   │   │   └── validators/      # Validaciones (RFC, correo, CP)
 │   │   └── .env.example
 │   └── web/                     # Frontend Next.js (React) + login Cognito (app/auth.ts)
+├── .github/workflows/           # CI/CD: deploy del backend con SAM (OIDC, sin access keys)
 ├── amplify.yml                  # Build del frontend en AWS Amplify Hosting
 ├── docs/
 │   ├── ARQUITECTURA.md          # Resumen técnico de la arquitectura
@@ -165,6 +166,15 @@ Guía completa paso a paso en **[docs/DEPLOY_AWS.md](docs/DEPLOY_AWS.md)**. Resu
 5. **(PLUS) Cognito** — user pool + JWT authorizer sobre las rutas `/api/*`.
 
 **Alternativa automatizada (recomendada):** [infra/template.yaml](infra/template.yaml) con AWS SAM crea Lambda (en VPC), API Gateway **y Cognito** en un solo `sam deploy`; solo RDS se crea aparte. Ver el camino corto en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md#desplegar-desde-cero).
+
+### CI/CD
+
+| Qué | Quién | Disparador |
+| --- | --- | --- |
+| Frontend (build + hosting) | AWS Amplify | Push a `main` que toque `apps/web` |
+| Backend (`sam deploy`) | GitHub Actions ([deploy-backend.yml](.github/workflows/deploy-backend.yml)) | Push a `main` que toque `apps/api/**` o `infra/**` |
+
+El workflow se autentica en AWS con **OIDC** (asume un rol IAM restringido a este repo y rama; sin access keys guardadas en GitHub). Requiere los secrets `AWS_DEPLOY_ROLE_ARN`, `DB_HOST` y `DB_PASSWORD` — configuración completa en [docs/DEPLOY_AWS.md](docs/DEPLOY_AWS.md#paso-7--opcional-cicd-del-backend-con-github-actions).
 
 ## Scripts útiles (raíz del monorepo)
 

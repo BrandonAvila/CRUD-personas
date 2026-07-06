@@ -113,3 +113,8 @@ sam deploy --template infra/template.yaml --stack-name crud-personas --resolve-s
 ```
 
 Outputs del stack: `ApiUrl`, `UserPoolId`, `UserPoolClientId`.
+
+## CI/CD
+
+- **Frontend**: Amplify Hosting reconstruye y publica con cada push a `main` que toque `apps/web` (build definido en `amplify.yml`).
+- **Backend**: GitHub Actions (`.github/workflows/deploy-backend.yml`) empaqueta la Lambda y ejecuta `sam deploy` con cada push que toque `apps/api/**` o `infra/**`; al final verifica `/health`. Autenticación por **OIDC**: el workflow asume un rol IAM cuya confianza está limitada a este repo y a la rama `main` — no hay access keys guardadas en GitHub (setup en [DEPLOY_AWS.md](DEPLOY_AWS.md#paso-7--opcional-cicd-del-backend-con-github-actions)).

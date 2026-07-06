@@ -8,10 +8,11 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 
-# Variables de entorno (los .example sí se versionan)
+# Variables de entorno y archivos locales con secretos (los .example sí se versionan)
 .env
 .env.local
 .env*.local
+*.local
 
 # Logs
 npm-debug.log*
