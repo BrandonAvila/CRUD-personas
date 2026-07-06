@@ -1,0 +1,76 @@
+# Despliega el backend (Lambda + API Gateway + Cognito) con SAM en cada push
+# a main que toque la API o la infraestructura.
+#
+# Autenticación sin access keys: GitHub OIDC asume el rol IAM indicado en el
+# secret AWS_DEPLOY_ROLE_ARN. Secrets requeridos (Settings → Secrets → Actions):
+#   AWS_DEPLOY_ROLE_ARN  arn:aws:iam::<cuenta>:role/github-actions-crud-personas
+#   DB_HOST              endpoint de la instancia RDS
+#   DB_PASSWORD          contraseña de la BD
+name: Deploy backend (SAM)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/api/**'
+      - 'infra/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write   # para el token OIDC
+  contents: read
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      # Equivalente Linux de scripts/package-lambda.ps1: deja el código con
+      # dependencias de producción en dist/lambda/ (CodeUri del template).
+      - name: Empaquetar Lambda
+        run: |
+          mkdir -p dist/lambda
+          cp -r apps/api/src apps/api/package.json dist/lambda/
+          cd dist/lambda
+          npm install --omit=dev --no-package-lock
+
+      - name: Validar template
+        run: sam validate --lint --template infra/template.yaml
+
+      - name: Desplegar con SAM
+        run: |
+          sam deploy \
+            --template infra/template.yaml \
+            --stack-name crud-personas \
+            --resolve-s3 \
+            --capabilities CAPABILITY_IAM \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset \
+            --no-progressbar \
+            --parameter-overrides "DbHost=${{ secrets.DB_HOST }} DbPassword=${{ secrets.DB_PASSWORD }}"
+
+      - name: Verificar salud de la API
+        run: |
+          URL=$(aws cloudformation describe-stacks --stack-name crud-personas \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text)
+          echo "Probando $URL/health"
+          curl --fail --silent "$URL/health" | grep -q '"estado":"ok"'
