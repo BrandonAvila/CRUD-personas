@@ -112,9 +112,17 @@ cd dist/lambda && npm install --omit=dev --no-package-lock && zip -r ../api-lamb
 
 ---
 
-## Paso 6 — (Opcional) Publicar el frontend
+## Paso 6 — (Opcional) Publicar el frontend con Amplify Hosting
 
-- **AWS Amplify Hosting** (o Vercel): conecta el repo de GitHub, *app root:* `apps/web`, build `pnpm install && pnpm build`, y define la variable **`NEXT_PUBLIC_API_URL` = Invoke URL** del API Gateway.
+1. Consola → **Amplify** → *Create new app* → GitHub → autoriza y elige el repo y la rama `main`.
+2. Marca **"My app is a monorepo"** con *app root* = `apps/web`. Amplify detecta Next.js y usa el [`amplify.yml`](../amplify.yml) del repo (incluye `node-linker=hoisted`, necesario porque el empaquetador de Amplify no sigue los symlinks de pnpm — sin eso el build falla con *"missing the 'next' dependency"*).
+3. En *Advanced settings* agrega las variables de entorno:
+   - `NEXT_PUBLIC_API_URL` = Invoke URL del API Gateway
+   - `NEXT_PUBLIC_COGNITO_CLIENT_ID` = output `UserPoolClientId` del stack
+   - `NEXT_PUBLIC_COGNITO_REGION` = región del user pool (ej. `us-east-1`)
+4. *Save and deploy*. Cada push a `main` redespliega automáticamente.
+
+> **Nota CORS**: los preflight `OPTIONS` del navegador no llevan token, por eso el template define la ruta `OPTIONS /api/{proxy+}` sin authorizer (la responde el middleware `cors()` de Express). Si el navegador reporta errores CORS/401 en peticiones que en Postman funcionan, verifica que esa ruta exista (`aws apigatewayv2 get-routes --api-id <id>`).
 
 ---
 

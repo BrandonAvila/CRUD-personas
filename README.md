@@ -45,10 +45,10 @@ crud-personas/
 │   │   │   └── validators/      # Validaciones (RFC, correo, CP)
 │   │   └── .env.example
 │   └── web/                     # Frontend Next.js (React) + login Cognito (app/auth.ts)
+├── amplify.yml                  # Build del frontend en AWS Amplify Hosting
 ├── docs/
 │   ├── ARQUITECTURA.md          # Resumen técnico de la arquitectura
-│   ├── DEPLOY_AWS.md            # Guía paso a paso de despliegue en AWS
-│   └── BITACORA.md              # Bitácora de desarrollo
+│   └── DEPLOY_AWS.md            # Guía paso a paso de despliegue en AWS
 ├── infra/template.yaml          # Alternativa IaC (AWS SAM)
 ├── postman/                     # Colección Postman lista para importar
 ├── scripts/package-lambda.ps1   # Genera dist/api-lambda.zip para Lambda

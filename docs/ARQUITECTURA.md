@@ -16,13 +16,16 @@ Monorepo (**pnpm workspaces**) con dos aplicaciones y su infraestructura:
 ## Diagrama
 
 ```
-LOCAL                                        AWS (us-east-1)
-─────                                        ───────────────
-[Postman]──┐                                 [Navegador / Postman]
-           ├─► API Express :3001                   │ HTTPS + JWT (Authorization: Bearer)
+LOCAL                                        AWS
+─────                                        ───
+[Postman]──┐                                 Amplify Hosting (us-east-2) — frontend Next.js
+           ├─► API Express :3001                   │ sirve la SPA; redeploy automático con cada push a main
 [Next.js   │        │                              ▼
- :3000]────┘        ▼                        API Gateway (HTTP API)
-              MySQL 8 (Docker :3307)           ├─ GET /health ............. pública
+ :3000]────┘        ▼                        [Navegador] ── HTTPS + JWT (Authorization: Bearer)
+              MySQL 8 (Docker :3307)               ▼
+                                             API Gateway (HTTP API, us-east-1)
+                                               ├─ GET /health ............. pública
+                                               ├─ OPTIONS /api/* .......... pública (preflight CORS)
                                                └─ ANY /api/* .... Cognito JWT authorizer
                                                     │
                                                     ▼
@@ -47,6 +50,7 @@ La tabla `personas` (`sql/schema.sql`) usa utf8mb4, índices únicos en `rfc` y 
 ## Autenticación (Cognito)
 
 - **Backend**: el template SAM crea un *user pool*, un *app client* SPA (sin secret) y un **JWT authorizer** en el API Gateway. `/health` es pública; todo `/api/*` responde `401` sin un token válido. La Lambda no valida tokens: lo hace el gateway antes de invocarla.
+- **Preflight CORS**: los navegadores envían `OPTIONS` sin token antes de cada petición; por eso existe una ruta explícita `OPTIONS /api/{proxy+}` **sin authorizer** que llega al middleware `cors()` de Express (responde 204 con los headers). Sin ella, el preflight caería en el authorizer del `ANY` y el navegador bloquearía todas las llamadas.
 - **Frontend** (`apps/web/app/auth.ts`): habla con el endpoint `cognito-idp` directamente vía `fetch` (protocolo JSON con header `X-Amz-Target`, el mismo de la AWS CLI) — **sin SDKs ni dependencias extra**. Maneja login (`USER_PASSWORD_AUTH`), sesión en `sessionStorage`, renovación automática del token (flujo `REFRESH_TOKEN_AUTH`, anticipada y ante 401) y cierre de sesión.
 - **Modo dual**: si `NEXT_PUBLIC_COGNITO_CLIENT_ID` está vacío, el frontend opera sin login (para desarrollo local contra la API sin proteger).
 
