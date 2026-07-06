@@ -1,0 +1,360 @@
+{
+  "info": {
+    "_postman_id": "3f8b2a71-9c4d-4e5f-8a2b-1c6d9e0f4a55",
+    "name": "CRUD Personas — Node.js + MySQL",
+    "description": "Colección para probar el microservicio CRUD.\n\n1. Ajusta la variable `baseUrl` (local: http://localhost:3001, AWS: la Invoke URL del API Gateway).\n2. Ejecuta primero 'Crear persona': guarda automáticamente el id creado en la variable `personaId`, que usan las peticiones de obtener/actualizar/eliminar.\n3. La carpeta 'Validaciones' contiene peticiones que DEBEN fallar (400/404/409) para demostrar las validaciones del backend.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001", "type": "string" },
+    { "key": "personaId", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Salud",
+      "item": [
+        {
+          "name": "Health check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Base de datos conectada', function () {",
+                  "  pm.expect(pm.response.json().baseDatos).to.eql('conectada');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. CRUD Personas",
+      "item": [
+        {
+          "name": "Crear persona (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "if (json && json.data && json.data.id) {",
+                  "  pm.collectionVariables.set('personaId', json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Juana Pérez López\",\n  \"rfc\": \"PELJ900101AB1\",\n  \"correo\": \"juana.perez@ejemplo.com\",\n  \"codigoPostal\": \"06600\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/personas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas"]
+            },
+            "description": "Crea un registro y guarda su id en {{personaId}}. Si responde 409 es porque ya existe: elimínalo primero o cambia rfc/correo."
+          }
+        },
+        {
+          "name": "Listar personas (GET)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Devuelve un arreglo en data', function () {",
+                  "  pm.expect(pm.response.json().data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas"]
+            }
+          }
+        },
+        {
+          "name": "Obtener persona por id (GET)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/{{personaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas", "{{personaId}}"]
+            }
+          }
+        },
+        {
+          "name": "Actualizar persona (PUT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Juana Pérez de García\",\n  \"rfc\": \"PELJ900101AB1\",\n  \"correo\": \"juana.garcia@ejemplo.com\",\n  \"codigoPostal\": \"44100\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/{{personaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas", "{{personaId}}"]
+            }
+          }
+        },
+        {
+          "name": "Eliminar persona (DELETE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/{{personaId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas", "{{personaId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Validaciones (deben fallar)",
+      "item": [
+        {
+          "name": "RFC inválido → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Reporta el campo rfc', function () {",
+                  "  var campos = pm.response.json().detalles.map(function (d) { return d.campo; });",
+                  "  pm.expect(campos).to.include('rfc');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Pedro Gómez\",\n  \"rfc\": \"ABC123\",\n  \"correo\": \"pedro@ejemplo.com\",\n  \"codigoPostal\": \"01000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/personas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas"]
+            }
+          }
+        },
+        {
+          "name": "Correo inválido → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Reporta el campo correo', function () {",
+                  "  var campos = pm.response.json().detalles.map(function (d) { return d.campo; });",
+                  "  pm.expect(campos).to.include('correo');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Pedro Gómez\",\n  \"rfc\": \"GOPE850315JK2\",\n  \"correo\": \"no-es-un-correo\",\n  \"codigoPostal\": \"01000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/personas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas"]
+            }
+          }
+        },
+        {
+          "name": "Campos faltantes → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });",
+                  "pm.test('Reporta rfc, correo y codigoPostal', function () {",
+                  "  var campos = pm.response.json().detalles.map(function (d) { return d.campo; });",
+                  "  pm.expect(campos).to.include.members(['rfc', 'correo', 'codigoPostal']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Solo Nombre\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/personas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas"]
+            }
+          }
+        },
+        {
+          "name": "RFC duplicado → 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Otra Persona Con RFC Repetido\",\n  \"rfc\": \"GODE561231GR8\",\n  \"correo\": \"otra.persona@ejemplo.com\",\n  \"codigoPostal\": \"01000\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/personas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas"]
+            },
+            "description": "Usa el RFC de uno de los registros de ejemplo del schema.sql (GODE561231GR8)."
+          }
+        },
+        {
+          "name": "Id inexistente → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/personas/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas", "999999"]
+            }
+          }
+        },
+        {
+          "name": "JSON malformado → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"nombreCompleto\": \"json sin cerrar\"",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/personas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "personas"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
