@@ -9,6 +9,10 @@ applications:
           commands:
             - corepack enable
             - corepack prepare pnpm@9 --activate
+            # pnpm usa symlinks que el empaquetador de Amplify no sigue; "hoisted"
+            # crea node_modules reales para que el runtime encuentre "next".
+            # (Solo afecta al build en Amplify; el .npmrc no está en el repo.)
+            - echo "node-linker=hoisted" > ../../.npmrc
             - pnpm install --frozen-lockfile
         build:
           commands:
